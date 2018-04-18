@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
-from torchvision import datasets
 from  torch.utils.data import DataLoader
 import torch.optim.lr_scheduler as lr_scheduler
 from CenterLoss import CenterLoss
