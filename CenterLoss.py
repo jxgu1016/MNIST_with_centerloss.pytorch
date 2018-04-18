@@ -28,7 +28,10 @@ class CenterlossFunc(Function):
         feature, label, centers = ctx.saved_variables
         centers_batch = centers.index_select(0, label.long())
         diff = centers_batch - feature
-        center_grads = Variable(torch.zeros(centers.size()))
+        if feature.is_cuda:
+            center_grads = Variable(torch.zeros(centers.size()).cuda())
+        else:
+            center_grads = Variable(torch.zeros(centers.size()))
         center_grads.scatter_add_(0, label.unsqueeze(1).expand(feature.size()).long(), diff)
         return grad_output*diff, None, center_grads
 
