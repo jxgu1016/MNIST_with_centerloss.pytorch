@@ -9,7 +9,6 @@ class CenterLoss(nn.Module):
         super(CenterLoss, self).__init__()
         self.centers = nn.Parameter(torch.randn(num_classes, feat_dim))
         self.centerlossfunc = CenterlossFunc.apply
-        self.reg_weight = reg_weight
 
     def forward(self, label, feature):
         return self.centerlossfunc(feature, label, self.centers)
