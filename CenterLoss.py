@@ -9,9 +9,15 @@ class CenterLoss(nn.Module):
         super(CenterLoss, self).__init__()
         self.centers = nn.Parameter(torch.randn(num_classes, feat_dim))
         self.centerlossfunc = CenterlossFunc.apply
+        self.feat_dim = feat_dim
 
-    def forward(self, label, feature):
-        return self.centerlossfunc(feature, label, self.centers)
+    def forward(self, label, feat):
+        batch_size = feat.size(0)
+        feat = feat.view(batch_size, 1, 1, -1).squeeze()
+        # To check the dim of centers and features
+        if feat.size(1) != self.feat_dim:
+            raise ValueError("Center's dim: {0} should be equal to input feature's dim: {1}".format(self.feat_dim,feat.size(1)))
+        return self.centerlossfunc(feat, label, self.centers)
 
 
 class CenterlossFunc(Function):
@@ -25,16 +31,21 @@ class CenterlossFunc(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        feature, label, centers = ctx.saved_variables
+        feature, label, centers = ctx.saved_tensors
         centers_batch = centers.index_select(0, label.long())
         diff = centers_batch - feature
-        if feature.is_cuda:
-            center_grads = Variable(torch.zeros(centers.size()).cuda())
-        else:
-            center_grads = Variable(torch.zeros(centers.size()))
-        center_grads.scatter_add_(0, label.unsqueeze(1).expand(feature.size()).long(), diff)
-        return grad_output*diff, None, center_grads
+        # init every iteration
+        counts = centers.new(centers.size(0)).fill_(1)
+        ones = centers.new(centers.size(0)).fill_(1)
+        grad_centers = centers.new(centers.size()).fill_(0)
+        counts = counts.scatter_add_(0, label.long(), ones)
+        # print counts, grad_centers
+        grad_centers.scatter_add_(0, label.unsqueeze(1).expand(feature.size()).long(), diff)
 
+
+        grad_centers = grad_centers/counts.view(-1, 1)
+
+        return Variable(-grad_output.data*diff), None, Variable(grad_centers)
 def main(test_cuda=False):
     print('-'*80)
     ct = CenterLoss(10,2)
