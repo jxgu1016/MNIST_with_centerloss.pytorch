@@ -36,7 +36,7 @@ class CenterlossFunc(Function):
         diff = centers_batch - feature
         # init every iteration
         counts = centers.new(centers.size(0)).fill_(1)
-        ones = centers.new(centers.size(0)).fill_(1)
+        ones = centers.new(label.size(0)).fill_(1)
         grad_centers = centers.new(centers.size()).fill_(0)
         counts = counts.scatter_add_(0, label.long(), ones)
         # print counts, grad_centers
@@ -46,6 +46,7 @@ class CenterlossFunc(Function):
         grad_centers = grad_centers/counts.view(-1, 1)
 
         return Variable(-grad_output.data*diff), None, Variable(grad_centers)
+
 def main(test_cuda=False):
     print('-'*80)
     ct = CenterLoss(10,2)
