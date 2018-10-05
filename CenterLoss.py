@@ -35,9 +35,9 @@ class CenterlossFunc(Function):
         centers_batch = centers.index_select(0, label.long())
         diff = centers_batch - feature
         # init every iteration
-        counts = centers.new(centers.size(0)).fill_(1)
-        ones = centers.new(label.size(0)).fill_(1)
-        grad_centers = centers.new(centers.size()).fill_(0)
+        counts = centers.new_ones(centers.size(0))
+        ones = centers.new_ones(label.size(0))
+        grad_centers = centers.new_zeros(centers.size())
 
         counts = counts.scatter_add_(0, label.long(), ones)
         grad_centers.scatter_add_(0, label.unsqueeze(1).expand(feature.size()).long(), diff)
