@@ -17,7 +17,8 @@ class CenterLoss(nn.Module):
         if feat.size(1) != self.feat_dim:
             raise ValueError("Center's dim: {0} should be equal to input feature's \
                             dim: {1}".format(self.feat_dim,feat.size(1)))
-        loss = self.centerlossfunc(feat, label, self.centers, batch_size if self.size_average else 1)
+        batch_size_tensor = feat.new_empty(1).fill_(batch_size if self.size_average else 1)
+        loss = self.centerlossfunc(feat, label, self.centers, batch_size_tensor)
         return loss
 
 
@@ -47,7 +48,7 @@ class CenterlossFunc(Function):
 def main(test_cuda=False):
     print('-'*80)
     device = torch.device("cuda" if test_cuda else "cpu")
-    ct = CenterLoss(10,2).to(device)
+    ct = CenterLoss(10,2,size_average=True).to(device)
     y = torch.Tensor([0,0,2,1]).to(device)
     feat = torch.zeros(4,2).to(device).requires_grad_()
     print (list(ct.parameters()))
